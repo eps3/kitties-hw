@@ -116,8 +116,8 @@ decl_module! {
 
 			// jc-note: This line failed, so I am checking `kitty_owner`,
 			//   ref: https://github.com/SubstrateCourse/kitties-course/issues/3
-			// ensure!(<OwnedKitties<T>>::contains_key((&sender, Some(kitty_id))), Error::<T>::RequireOwner);
-			ensure!(Self::kitty_owner(kitty_id) == Some(sender.clone()), "Kitty is not owned by sender.");
+			ensure!(<OwnedKitties<T>>::contains_key((&sender, Some(kitty_id))), Error::<T>::RequireOwner);
+			// ensure!(Self::kitty_owner(kitty_id) == Some(sender.clone()), "Kitty is not owned by sender.");
 
 			Self::do_transfer(&sender, &to, kitty_id);
 
@@ -252,6 +252,7 @@ mod tests {
 		pub const MaximumBlockWeight: Weight = 1024;
 		pub const MaximumBlockLength: u32 = 2 * 1024;
 		pub const AvailableBlockRatio: Perbill = Perbill::from_percent(75);
+		pub const ExistentialDeposit: u64 = 1;
 	}
 	impl system::Trait for Test {
 		type Origin = Origin;
@@ -275,16 +276,26 @@ mod tests {
 		type AvailableBlockRatio = AvailableBlockRatio;
 		type Version = ();
 		type SystemWeightInfo = ();
-		type PalletInfo = PalletInfo;
-		type AccountData = ();
+		type PalletInfo = ();
+		type AccountData = pallet_balances::AccountData<u64>;
 		type OnNewAccount = ();
 		type OnKilledAccount = ();
 		}
-
+	impl pallet_balances::Trait for Test {
+		type Balance = u64;
+		type MaxLocks = ();
+		type Event = ();
+		type DustRemoval = ();
+		type ExistentialDeposit = ExistentialDeposit;
+		type AccountStore = system::Module<Test>;
+		type WeightInfo = ();
+	}
+	type Randomness = pallet_randomness_collective_flip::Module<Test>;
+	type Balances = pallet_balances::Module<Test>;
 	impl Trait for Test {
 		type Event = ();
-		type Currency: Balances;
-		type Randomness: Randomness<H256>;
+		type Randomness = Randomness;
+		type Currency = Balances;
 		type KittyIndex = u32;
 	}
 	type OwnedKittiesTest = OwnedKitties<Test>;

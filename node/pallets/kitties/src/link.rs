@@ -36,10 +36,51 @@ impl<Storage, Key, Value> LinkedList<Storage, Key, Value> where
 	}
 
 	pub fn append(key: &Key, value: Value) {
-		// 作业
+		let item = Self::read_head(key);
+		if let Some(next) = item.next {
+			// 将该节点指向老的头部
+			Self::write(key, Some(value), LinkedItem {
+				prev: None,
+				next: Some(next)
+			});
+			// 将老的头部的prev指向新的头部
+			let old_head = Self::read(key, Some(next));
+			Self::write(key, Some(next), LinkedItem {
+				prev: Some(value),
+				next: old_head.next
+			});
+			// 更新头节点的指向
+			Self::write_head(key, LinkedItem {
+				prev: item.prev,
+				next: Some(value)
+			});
+		} else {
+			// 如果是第一次插入，可以直接插入一个空的link
+			Self::write(key, Some(value), LinkedItem {
+				prev: None,
+				next: None
+			});
+			// 再往头部更新
+			Self::write(key, None, LinkedItem {
+				prev: Some(value),
+				next: Some(value)
+			});
+		}
 	}
 
 	pub fn remove(key: &Key, value: Value) {
-		// 作业
+		let item = Self::read(key, Some(value));
+		let prev_item = Self::read(key, item.prev);
+		let new_prev_item = LinkedItem {
+			prev: prev_item.prev,
+			next: item.next
+		};
+		Self::write(key, item.prev, new_prev_item);
+		let next_item = Self::read(key, item.next);
+		let new_next_item = LinkedItem {
+			prev: item.prev,
+			next: next_item.next
+		};
+		Self::write(key, item.next, new_next_item);
 	}
 }
